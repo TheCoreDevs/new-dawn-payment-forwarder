@@ -279,7 +279,7 @@ contract NewDawnMarketplace {
         emit NewAdmin(oldAdmin, newAdmin);
     }
 
-    function setTreasuryAddress(address payable newAddress) private {
+    function setTreasuryAddress(address payable newAddress) external onlyAdmin {
         require(newAddress != address(0), "Treasury cannot be set to zero");
         address oldTreasury = treasury;
         treasury = newAddress;
