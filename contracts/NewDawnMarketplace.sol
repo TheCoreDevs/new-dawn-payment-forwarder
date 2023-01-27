@@ -180,4 +180,21 @@ library ECDSA {
 
 contract NewDawnMarketplace {
     
+    address public admin;
+    event NewAdmin(address oldAdmin, address newAdmin);
+    modifier onlyAdmin {
+        require(msg.sender == admin, "Only Admin");
+        _;
+    }
+    constructor () {
+        admin = msg.sender;
+    }
+    // ADMIN FUNCTIONS
+    
+    function changeAdmin(address newAdmin) external onlyAdmin {
+        require(newAdmin != address(0), "Admin cannot be set to zero");
+        address oldAdmin = admin;
+        admin = newAdmin;
+        emit NewAdmin(oldAdmin, newAdmin);
+    }
 }
