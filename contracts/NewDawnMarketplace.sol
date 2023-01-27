@@ -179,6 +179,8 @@ library ECDSA {
 }
 
 contract NewDawnMarketplace {
+
+    mapping(bytes32 => bool) acceptedOffers;
     
     address public admin;
     address payable public treasury;
@@ -192,7 +194,8 @@ contract NewDawnMarketplace {
     event NewAdmin(address oldAdmin, address newAdmin);
     event NewTreasury(address oldTreasury, address newTreasury);
     event UpdatedTradingStatus(bool status);
-    event PriceChange(string indexed priceType, uint newPrice);
+    event PriceChange(string indexed _type, uint newPrice);
+    event ActivityEvents(string indexed _type, address indexed txnSender, bytes32 indexed ethSignedMsgHash);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -218,6 +221,38 @@ contract NewDawnMarketplace {
         _directAcceptancePrice = directAcceptancePriceInWei;
         _globalOfferPrice = globalOfferPriceInWei;
         _globalAcceptancePrice = globalAcceptancePriceInWei;
+    }
+
+    function makeDirectOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external payable tradingEnabled {
+        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
+        require(msg.value == _directOfferPrice, "Invalid Eth Amount");
+        _transferMsgValueToTreasury();
+        emit ActivityEvents("Direct Offer", msg.sender, ethSignedMsgHash);
+    }
+
+    function acceptDirectOffer(bytes32 ethSignedMsgHash, bytes calldata signature, address from) external payable tradingEnabled {
+        require(!acceptedOffers[ethSignedMsgHash], "Offer allready accepted!");
+        require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
+        require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
+        acceptedOffers[ethSignedMsgHash] = true;
+        _transferMsgValueToTreasury();
+        emit ActivityEvents("Direct Acceptance", msg.sender, ethSignedMsgHash);
+    }
+
+    function makeGlobalOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external payable tradingEnabled {
+        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
+        require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
+        _transferMsgValueToTreasury();
+        emit ActivityEvents("Global Offer", msg.sender, ethSignedMsgHash);
+    }
+
+    function acceptGlobalOffer(bytes32 ethSignedMsgHash, bytes calldata signature, address from) external payable tradingEnabled {
+        require(!acceptedOffers[ethSignedMsgHash], "Offer allready accepted!");
+        require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
+        require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
+        acceptedOffers[ethSignedMsgHash] = true;
+        _transferMsgValueToTreasury();
+        emit ActivityEvents("Global Acceptance", msg.sender, ethSignedMsgHash);
     }
 
     // ADMIN FUNCTIONS
