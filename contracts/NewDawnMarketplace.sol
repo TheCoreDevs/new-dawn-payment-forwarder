@@ -183,8 +183,14 @@ contract NewDawnMarketplace {
     address public admin;
     bool public tradingToggle;
 
+    uint internal _directOfferPrice;
+    uint internal _directAcceptancePrice;
+    uint internal _globalOfferPrice;
+    uint internal _globalAcceptancePrice;
+
     event NewAdmin(address oldAdmin, address newAdmin);
     event UpdatedTradingStatus(bool status);
+    event PriceChange(string indexed priceType, uint newPrice);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -197,8 +203,17 @@ contract NewDawnMarketplace {
         _;
     }
 
-    constructor () {
+    constructor(
+        uint directOfferPriceInWei,
+        uint directAcceptancePriceInWei,
+        uint globalOfferPriceInWei,
+        uint globalAcceptancePriceInWei
+    ) {
         admin = msg.sender;
+        _directOfferPrice = directOfferPriceInWei;
+        _directAcceptancePrice = directAcceptancePriceInWei;
+        _globalOfferPrice = globalOfferPriceInWei;
+        _globalAcceptancePrice = globalAcceptancePriceInWei;
     }
 
     // ADMIN FUNCTIONS
@@ -214,5 +229,37 @@ contract NewDawnMarketplace {
     function toggleTrading() external onlyAdmin {
         tradingToggle = !tradingToggle;
         emit UpdatedTradingStatus(tradingToggle);
+    }
+
+    function changeDirectOfferPrice(uint priceInWei) external onlyAdmin {
+        _directOfferPrice = priceInWei;
+        emit PriceChange("Direct Offer", priceInWei);
+    }
+
+    function changeDirectAcceptancePrice(uint priceInWei) external onlyAdmin {
+        _directAcceptancePrice = priceInWei;
+        emit PriceChange("Direct Acceptance", priceInWei);
+    }
+
+    function changeGlobalOfferPrice(uint priceInWei) external onlyAdmin {
+        _globalOfferPrice = priceInWei;
+        emit PriceChange("Global Offer", priceInWei);
+    }
+
+    function changeGlobalAcceptancePrice(uint priceInWei) external onlyAdmin {
+        _globalAcceptancePrice = priceInWei;
+        emit PriceChange("Global Acceptance", priceInWei);
+    }
+
+    
+    // GETTERS
+    /*
+     * @dev returns all price values
+     */
+    function returnPrices() external view returns(uint directOffer, uint directAcceptance, uint globalOffer, uint globalAcceptance) {
+        directOffer = _directOfferPrice;
+        directAcceptance = _directAcceptancePrice;
+        globalOffer = _globalOfferPrice;
+        globalAcceptance = _globalAcceptancePrice;
     }
 }
