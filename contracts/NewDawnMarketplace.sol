@@ -210,7 +210,6 @@ contract NewDawnMarketplace {
         emit NewAdmin(oldAdmin, newAdmin);
     }
 
-
     // switch for trading toggle
     function toggleTrading() external onlyAdmin {
         tradingToggle = !tradingToggle;
