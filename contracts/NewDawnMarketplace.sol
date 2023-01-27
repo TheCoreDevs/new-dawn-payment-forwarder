@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-contract NewDawnMarketplace {
+contract NewDawnPaymentForwarder {
 
     address public admin;
     address payable public treasury;
