@@ -201,13 +201,6 @@ contract NewDawnMarketplace {
         admin = msg.sender;
     }
 
-    // switch for trading toggle
-    function toggleTrading() external onlyAdmin {
-        tradingToggle = !tradingToggle;
-        emit UpdatedTradingStatus(tradingToggle);
-    }
-
-
     // ADMIN FUNCTIONS
     
     function changeAdmin(address newAdmin) external onlyAdmin {
@@ -215,5 +208,12 @@ contract NewDawnMarketplace {
         address oldAdmin = admin;
         admin = newAdmin;
         emit NewAdmin(oldAdmin, newAdmin);
+    }
+
+
+    // switch for trading toggle
+    function toggleTrading() external onlyAdmin {
+        tradingToggle = !tradingToggle;
+        emit UpdatedTradingStatus(tradingToggle);
     }
 }
