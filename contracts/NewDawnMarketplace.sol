@@ -180,7 +180,12 @@ library ECDSA {
 
 contract NewDawnMarketplace {
 
-    mapping(bytes32 => bool) acceptedOffers;
+    enum Types {
+        direct,
+        global
+    }
+
+    mapping(bytes32 => bool) usedOffers;
     
     address public admin;
     address payable public treasury;
@@ -223,36 +228,46 @@ contract NewDawnMarketplace {
         _globalAcceptancePrice = globalAcceptancePriceInWei;
     }
 
-    function makeDirectOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external payable tradingEnabled {
+    function makeDirectOffer(bytes32 hash, bytes calldata signature) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHash(hash, Types.direct);
         require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
         _transferMsgValueToTreasury();
         emit ActivityEvents("Direct Offer", msg.sender, ethSignedMsgHash);
     }
 
-    function acceptDirectOffer(bytes32 ethSignedMsgHash, bytes calldata signature, address from) external payable tradingEnabled {
-        require(!acceptedOffers[ethSignedMsgHash], "Offer allready accepted!");
+    function acceptDirectOffer(bytes32 hash, bytes calldata signature, address from) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHash(hash, Types.direct);
         require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
+        require(!usedOffers[ethSignedMsgHash], "Offer allready accepted!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
-        acceptedOffers[ethSignedMsgHash] = true;
+        usedOffers[ethSignedMsgHash] = true;
         _transferMsgValueToTreasury();
         emit ActivityEvents("Direct Acceptance", msg.sender, ethSignedMsgHash);
     }
 
-    function makeGlobalOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external payable tradingEnabled {
+    function makeGlobalOffer(bytes32 hash, bytes calldata signature) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHash(hash, Types.global);
         require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
         _transferMsgValueToTreasury();
         emit ActivityEvents("Global Offer", msg.sender, ethSignedMsgHash);
     }
 
-    function acceptGlobalOffer(bytes32 ethSignedMsgHash, bytes calldata signature, address from) external payable tradingEnabled {
-        require(!acceptedOffers[ethSignedMsgHash], "Offer allready accepted!");
+    function acceptGlobalOffer(bytes32 hash, bytes calldata signature, address from) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHash(hash, Types.global);
         require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
+        require(!usedOffers[ethSignedMsgHash], "Offer allready accepted!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
-        acceptedOffers[ethSignedMsgHash] = true;
+        usedOffers[ethSignedMsgHash] = true;
         _transferMsgValueToTreasury();
         emit ActivityEvents("Global Acceptance", msg.sender, ethSignedMsgHash);
+    }
+
+    function cancelOffer(bytes32 hash, bytes calldata signature, Types _type) external {
+        bytes32 ethSignedMsgHash = getHash(hash, _type);
+        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer is not the from address");
+        usedOffers[ethSignedMsgHash] = true;
     }
 
     // ADMIN FUNCTIONS
@@ -314,5 +329,9 @@ contract NewDawnMarketplace {
     function _transferMsgValueToTreasury() private {
         (bool success, ) = treasury.call{value: msg.value, gas: 3000}("");
         require(success, "Transfer to treasury failed");
+    }
+
+    function getHash(bytes32 hash, Types _type) private pure returns(bytes32) {
+        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(hash, _type)));
     }
 }
