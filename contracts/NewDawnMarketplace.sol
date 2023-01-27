@@ -133,13 +133,6 @@ library ECDSA {
 
 contract NewDawnMarketplace {
 
-    enum Types {
-        direct,
-        global
-    }
-
-    mapping(bytes32 => bool) usedOffers;
-    
     address public admin;
     address payable public treasury;
     bool public tradingToggle;
@@ -153,7 +146,7 @@ contract NewDawnMarketplace {
     event NewTreasury(address oldTreasury, address newTreasury);
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed _type, uint newPrice);
-    event ActivityEvents(string indexed _type, address indexed txnSender, bytes32 indexed ethSignedMsgHash);
+    event ActivityEvents(string indexed _type, address indexed txnSender);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -175,52 +168,31 @@ contract NewDawnMarketplace {
     ) {
         admin = msg.sender;
         treasury = treasuryAddress;
-        _directOfferPrice = directOfferPriceInWei;
-        _directAcceptancePrice = directAcceptancePriceInWei;
-        _globalOfferPrice = globalOfferPriceInWei;
-        _globalAcceptancePrice = globalAcceptancePriceInWei;
+        setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
     }
 
-    function makeDirectOffer(bytes32 hash, bytes calldata signature) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHash(hash, Types.direct);
-        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
+    function makeDirectOffer() external payable tradingEnabled {
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
         _transferMsgValueToTreasury();
-        emit ActivityEvents("Direct Offer", msg.sender, ethSignedMsgHash);
+        emit ActivityEvents("Direct Offer", msg.sender);
     }
 
-    function acceptDirectOffer(bytes32 hash, bytes calldata signature, address from) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHash(hash, Types.direct);
-        require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
-        require(!usedOffers[ethSignedMsgHash], "Offer allready accepted!");
+    function acceptDirectOffer() external payable tradingEnabled {
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
-        usedOffers[ethSignedMsgHash] = true;
         _transferMsgValueToTreasury();
-        emit ActivityEvents("Direct Acceptance", msg.sender, ethSignedMsgHash);
+        emit ActivityEvents("Direct Acceptance", msg.sender);
     }
 
-    function makeGlobalOffer(bytes32 hash, bytes calldata signature) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHash(hash, Types.global);
-        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer not transaction sender");
+    function makeGlobalOffer() external payable tradingEnabled {
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
         _transferMsgValueToTreasury();
-        emit ActivityEvents("Global Offer", msg.sender, ethSignedMsgHash);
+        emit ActivityEvents("Global Offer", msg.sender);
     }
 
-    function acceptGlobalOffer(bytes32 hash, bytes calldata signature, address from) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHash(hash, Types.global);
-        require(ECDSA.recover(ethSignedMsgHash, signature) == from, "Signer is not the from address");
-        require(!usedOffers[ethSignedMsgHash], "Offer allready accepted!");
+    function acceptGlobalOffer() external payable tradingEnabled {
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
-        usedOffers[ethSignedMsgHash] = true;
         _transferMsgValueToTreasury();
-        emit ActivityEvents("Global Acceptance", msg.sender, ethSignedMsgHash);
-    }
-
-    function cancelOffer(bytes32 hash, bytes calldata signature, Types _type) external {
-        bytes32 ethSignedMsgHash = getHash(hash, _type);
-        require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer is not the from address");
-        usedOffers[ethSignedMsgHash] = true;
+        emit ActivityEvents("Global Acceptance", msg.sender);
     }
 
     // ADMIN FUNCTIONS
@@ -265,6 +237,19 @@ contract NewDawnMarketplace {
         emit PriceChange("Global Acceptance", priceInWei);
     }
 
+    function changeAllPrices(
+        uint directOfferPriceInWei,
+        uint directAcceptancePriceInWei,
+        uint globalOfferPriceInWei,
+        uint globalAcceptancePriceInWei
+    ) external onlyAdmin {
+        setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
+        emit PriceChange("Direct Offer", directOfferPriceInWei);
+        emit PriceChange("Direct Acceptance", directAcceptancePriceInWei);
+        emit PriceChange("Global Offer", globalOfferPriceInWei);
+        emit PriceChange("Global Acceptance", globalAcceptancePriceInWei);
+    }
+
     
     // GETTERS
     /*
@@ -284,7 +269,15 @@ contract NewDawnMarketplace {
         require(success, "Transfer to treasury failed");
     }
 
-    function getHash(bytes32 hash, Types _type) private pure returns(bytes32) {
-        return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(hash, _type)));
+    function setAllPrices(
+        uint directOfferPriceInWei,
+        uint directAcceptancePriceInWei,
+        uint globalOfferPriceInWei,
+        uint globalAcceptancePriceInWei
+    ) private {
+        _directOfferPrice = directOfferPriceInWei;
+        _directAcceptancePrice = directAcceptancePriceInWei;
+        _globalOfferPrice = globalOfferPriceInWei;
+        _globalAcceptancePrice = globalAcceptancePriceInWei;
     }
 }
