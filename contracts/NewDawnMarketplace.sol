@@ -181,14 +181,33 @@ library ECDSA {
 contract NewDawnMarketplace {
     
     address public admin;
+    bool public tradingToggle;
+
     event NewAdmin(address oldAdmin, address newAdmin);
+    event UpdatedTradingStatus(bool status);
+
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
         _;
     }
+
+    // requires `tradingToggle` to be true
+    modifier tradingEnabled {
+        require(tradingToggle, "Trading is disabled");
+        _;
+    }
+
     constructor () {
         admin = msg.sender;
     }
+
+    // switch for trading toggle
+    function toggleTrading() external onlyAdmin {
+        tradingToggle = !tradingToggle;
+        emit UpdatedTradingStatus(tradingToggle);
+    }
+
+
     // ADMIN FUNCTIONS
     
     function changeAdmin(address newAdmin) external onlyAdmin {
