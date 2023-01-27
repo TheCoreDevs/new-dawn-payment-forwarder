@@ -181,6 +181,7 @@ library ECDSA {
 contract NewDawnMarketplace {
     
     address public admin;
+    address public treasury;
     bool public tradingToggle;
 
     uint internal _directOfferPrice;
@@ -189,6 +190,7 @@ contract NewDawnMarketplace {
     uint internal _globalAcceptancePrice;
 
     event NewAdmin(address oldAdmin, address newAdmin);
+    event NewTreasury(address oldTreasury, address newTreasury);
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed priceType, uint newPrice);
 
@@ -204,12 +206,14 @@ contract NewDawnMarketplace {
     }
 
     constructor(
+        address treasuryAddress,
         uint directOfferPriceInWei,
         uint directAcceptancePriceInWei,
         uint globalOfferPriceInWei,
         uint globalAcceptancePriceInWei
     ) {
         admin = msg.sender;
+        treasury = treasuryAddress;
         _directOfferPrice = directOfferPriceInWei;
         _directAcceptancePrice = directAcceptancePriceInWei;
         _globalOfferPrice = globalOfferPriceInWei;
@@ -223,6 +227,13 @@ contract NewDawnMarketplace {
         address oldAdmin = admin;
         admin = newAdmin;
         emit NewAdmin(oldAdmin, newAdmin);
+    }
+
+    function setTreasuryAddress(address newAddress) private {
+        require(newAddress != address(0), "Treasury cannot be set to zero");
+        address oldTreasury = treasury;
+        treasury = newAddress;
+        emit NewTreasury(oldTreasury, newAddress);
     }
 
     // switch for trading toggle
