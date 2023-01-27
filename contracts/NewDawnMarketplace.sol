@@ -181,7 +181,7 @@ library ECDSA {
 contract NewDawnMarketplace {
     
     address public admin;
-    address public treasury;
+    address payable public treasury;
     bool public tradingToggle;
 
     uint internal _directOfferPrice;
@@ -206,7 +206,7 @@ contract NewDawnMarketplace {
     }
 
     constructor(
-        address treasuryAddress,
+        address payable treasuryAddress,
         uint directOfferPriceInWei,
         uint directAcceptancePriceInWei,
         uint globalOfferPriceInWei,
@@ -229,7 +229,7 @@ contract NewDawnMarketplace {
         emit NewAdmin(oldAdmin, newAdmin);
     }
 
-    function setTreasuryAddress(address newAddress) private {
+    function setTreasuryAddress(address payable newAddress) private {
         require(newAddress != address(0), "Treasury cannot be set to zero");
         address oldTreasury = treasury;
         treasury = newAddress;
