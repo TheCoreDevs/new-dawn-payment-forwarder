@@ -273,4 +273,11 @@ contract NewDawnMarketplace {
         globalOffer = _globalOfferPrice;
         globalAcceptance = _globalAcceptancePrice;
     }
+
+    // PRIVATE FUNCTIONS
+
+    function _transferMsgValueToTreasury() private {
+        (bool success, ) = treasury.call{value: msg.value, gas: 3000}("");
+        require(success, "Transfer to treasury failed");
+    }
 }
