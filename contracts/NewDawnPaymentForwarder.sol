@@ -172,10 +172,7 @@ contract NewDawnMarketplace {
     ) {
         admin = msg.sender;
         treasury = treasuryAddress;
-        _directOfferPrice = directOfferPriceInWei;
-        _directAcceptancePrice = directAcceptancePriceInWei;
-        _globalOfferPrice = globalOfferPriceInWei;
-        _globalAcceptancePrice = globalAcceptancePriceInWei;
+        _setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
     }
 
     function makeDirectOffer(uint txnId, uint nftId, address to, bytes calldata sig) external payable tradingEnabled {
@@ -265,6 +262,19 @@ contract NewDawnMarketplace {
         emit PriceChange("Global Acceptance", priceInWei);
     }
 
+    function changeAllPrices(
+        uint directOfferPriceInWei,
+        uint directAcceptancePriceInWei,
+        uint globalOfferPriceInWei,
+        uint globalAcceptancePriceInWei
+    ) external onlyAdmin {
+        _setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
+        emit PriceChange("Direct Offer", directOfferPriceInWei);
+        emit PriceChange("Direct Acceptance", directAcceptancePriceInWei);
+        emit PriceChange("Global Offer", globalOfferPriceInWei);
+        emit PriceChange("Global Acceptance", globalAcceptancePriceInWei);
+    }
+
     
     // GETTERS
     /*
@@ -290,5 +300,17 @@ contract NewDawnMarketplace {
 
     function getHashGlobal(uint txnId, uint nftId, address signer) private view returns(bytes32) {
         return ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(txnId, nftId, userNonce[signer])));
+    }
+
+    function _setAllPrices(
+        uint directOfferPriceInWei,
+        uint directAcceptancePriceInWei,
+        uint globalOfferPriceInWei,
+        uint globalAcceptancePriceInWei
+    ) private {
+        _directOfferPrice = directOfferPriceInWei;
+        _directAcceptancePrice = directAcceptancePriceInWei;
+        _globalOfferPrice = globalOfferPriceInWei;
+        _globalAcceptancePrice = globalAcceptancePriceInWei;
     }
 }
