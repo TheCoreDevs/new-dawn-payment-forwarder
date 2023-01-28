@@ -185,8 +185,8 @@ contract NewDawnPaymentForwarder {
         _transferMsgValueToTreasury();
     }
 
-    function acceptDirectOffer(uint txnId, uint nftId, address to, address from, bytes calldata sig) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, from);
+    function acceptDirectOffer(uint txnId, uint nftId, address from, bytes calldata sig) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, msg.sender, from);
         require(ECDSA.recover(ethSignedMsgHash, sig) == from, "Signer is not the from address");
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
