@@ -150,7 +150,8 @@ contract NewDawnPaymentForwarder {
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed _type, uint newPrice);
     event NewNonce(address indexed user, uint nonce);
-    event ActivityEvents(uint txnId);
+    event DirectActivityEvents(uint txnId);
+    event GlobalActivityEvents(uint txnId);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -180,17 +181,17 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
-        emit ActivityEvents(txnId);
+        emit DirectActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
-    function acceptDirectOffer(uint txnId, uint nftId, address to, address from, bytes calldata sig) external payable tradingEnabled {
-        bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, from);
+    function acceptDirectOffer(uint txnId, uint nftId, address from, bytes calldata sig) external payable tradingEnabled {
+        bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, msg.sender, from);
         require(ECDSA.recover(ethSignedMsgHash, sig) == from, "Signer is not the from address");
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit ActivityEvents(txnId);
+        emit DirectActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -198,7 +199,7 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
-        emit ActivityEvents(txnId);
+        emit GlobalActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -208,7 +209,7 @@ contract NewDawnPaymentForwarder {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit ActivityEvents(txnId);
+        emit GlobalActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -313,5 +314,14 @@ contract NewDawnPaymentForwarder {
         _directAcceptancePrice = directAcceptancePriceInWei;
         _globalOfferPrice = globalOfferPriceInWei;
         _globalAcceptancePrice = globalAcceptancePriceInWei;
+    }
+
+    // UTILS
+    function getMsgDirect(uint txnId, uint nftId, address to, address signer) external view returns(bytes32) {
+        return keccak256(abi.encodePacked(txnId, nftId, to, userNonce[signer]));
+    }
+
+    function getMsgGlobal(uint txnId, uint nftId, address signer) private view returns(bytes32) {
+        return keccak256(abi.encodePacked(txnId, nftId, userNonce[signer]));
     }
 }
