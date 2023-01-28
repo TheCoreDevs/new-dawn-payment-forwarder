@@ -171,6 +171,7 @@ contract NewDawnMarketplace {
         uint globalAcceptancePriceInWei
     ) {
         admin = msg.sender;
+        require(treasuryAddress != address(0), "treasury cannot be set to zero");
         treasury = treasuryAddress;
         _setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
     }
@@ -179,8 +180,8 @@ contract NewDawnMarketplace {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
-        _transferMsgValueToTreasury();
         emit ActivityEvents(txnId);
+        _transferMsgValueToTreasury();
     }
 
     function acceptDirectOffer(uint txnId, uint nftId, address to, address from, bytes calldata sig) external payable tradingEnabled {
@@ -189,16 +190,16 @@ contract NewDawnMarketplace {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        _transferMsgValueToTreasury();
         emit ActivityEvents(txnId);
+        _transferMsgValueToTreasury();
     }
 
     function makeGlobalOffer(uint txnId, uint nftId, bytes calldata sig) external payable tradingEnabled {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
-        _transferMsgValueToTreasury();
         emit ActivityEvents(txnId);
+        _transferMsgValueToTreasury();
     }
 
     function acceptGlobalOffer(uint txnId, uint nftId, address from, bytes calldata sig) external payable tradingEnabled {
@@ -207,8 +208,8 @@ contract NewDawnMarketplace {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        _transferMsgValueToTreasury();
         emit ActivityEvents(txnId);
+        _transferMsgValueToTreasury();
     }
 
     function cancelOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external {
