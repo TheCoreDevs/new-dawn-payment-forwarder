@@ -131,7 +131,7 @@ library ECDSA {
     }
 }
 
-contract NewDawnMarketplace {
+contract NewDawnPaymentForwarder {
 
     mapping(bytes32 => bool) usedOffers;
     mapping(address => uint) userNonce;
