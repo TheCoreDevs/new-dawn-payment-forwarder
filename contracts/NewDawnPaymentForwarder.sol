@@ -131,7 +131,7 @@ library ECDSA {
     }
 }
 
-contract NewDawnMarketplace {
+contract NewDawnPaymentForwarder {
 
     mapping(bytes32 => bool) usedOffers;
     mapping(address => uint) userNonce;
@@ -150,7 +150,8 @@ contract NewDawnMarketplace {
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed _type, uint newPrice);
     event NewNonce(address indexed user, uint nonce);
-    event ActivityEvents(uint txnId);
+    event DirectActivityEvents(uint txnId);
+    event GlobalActivityEvents(uint txnId);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -180,7 +181,7 @@ contract NewDawnMarketplace {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
-        emit ActivityEvents(txnId);
+        emit DirectActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -190,7 +191,7 @@ contract NewDawnMarketplace {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit ActivityEvents(txnId);
+        emit DirectActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -198,7 +199,7 @@ contract NewDawnMarketplace {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
-        emit ActivityEvents(txnId);
+        emit GlobalActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -208,7 +209,7 @@ contract NewDawnMarketplace {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit ActivityEvents(txnId);
+        emit GlobalActivityEvents(txnId);
         _transferMsgValueToTreasury();
     }
 
