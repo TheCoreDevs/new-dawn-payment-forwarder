@@ -321,7 +321,7 @@ contract NewDawnPaymentForwarder {
         return keccak256(abi.encodePacked(txnId, nftId, to, userNonce[signer]));
     }
 
-    function getMsgGlobal(uint txnId, uint nftId, address signer) private view returns(bytes32) {
+    function getMsgGlobal(uint txnId, uint nftId, address signer) external view returns(bytes32) {
         return keccak256(abi.encodePacked(txnId, nftId, userNonce[signer]));
     }
 }
