@@ -139,6 +139,7 @@ contract NewDawnPaymentForwarder {
     address public admin;
     address payable public treasury;
     bool public tradingToggle;
+    bool initialized;
 
     uint internal _directOfferPrice;
     uint internal _directAcceptancePrice;
@@ -166,16 +167,19 @@ contract NewDawnPaymentForwarder {
         _;
     }
 
-    constructor(
+    function initialize(
         address payable treasuryAddress,
+        address _admin,
         uint directOfferPriceInWei,
         uint directAcceptancePriceInWei,
         uint globalOfferPriceInWei,
         uint globalAcceptancePriceInWei
-    ) {
-        admin = msg.sender;
+    ) external {
+        require(!initialized, "Already initialized");
+        admin = _admin;
         require(treasuryAddress != address(0), "treasury cannot be set to zero");
         treasury = treasuryAddress;
+        initialized = true;
         _setAllPrices(directOfferPriceInWei, directAcceptancePriceInWei, globalOfferPriceInWei, globalAcceptancePriceInWei);
     }
 
