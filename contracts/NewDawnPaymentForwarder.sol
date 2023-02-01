@@ -150,8 +150,10 @@ contract NewDawnPaymentForwarder {
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed _type, uint newPrice);
     event NewNonce(address indexed user, uint nonce);
-    event DirectActivityEvents(uint txnId);
-    event GlobalActivityEvents(uint txnId);
+    event DirectOffer(uint txnId);
+    event DirectOfferAcceptance(uint txnId);
+    event GlobalOffer(uint txnId);
+    event GlobalOfferAcceptance(uint txnId);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -181,7 +183,7 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
-        emit DirectActivityEvents(txnId);
+        emit DirectOffer(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -191,7 +193,7 @@ contract NewDawnPaymentForwarder {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit DirectActivityEvents(txnId);
+        emit DirectOfferAcceptance(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -199,7 +201,7 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
-        emit GlobalActivityEvents(txnId);
+        emit GlobalOffer(txnId);
         _transferMsgValueToTreasury();
     }
 
@@ -209,7 +211,7 @@ contract NewDawnPaymentForwarder {
         require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
         usedOffers[ethSignedMsgHash] = true;
-        emit GlobalActivityEvents(txnId);
+        emit GlobalOfferAcceptance(txnId);
         _transferMsgValueToTreasury();
     }
 
