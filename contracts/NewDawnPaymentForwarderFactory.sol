@@ -53,6 +53,7 @@ contract NewDawnPaymentForwarderFactory {
     event NewContract(address contractAddress);
 
     constructor(address impl) {
+        require(bytes2(bytes20(impl)) == bytes2(0), "Must be a vanity address!");
         admin = msg.sender;
         implementation = impl;
     }
