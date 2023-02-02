@@ -133,7 +133,7 @@ library ECDSA {
 
 contract NewDawnPaymentForwarder {
 
-    mapping(bytes32 => bool) usedOffers;
+    mapping(bytes32 => bool) public verifiedOffer;
     mapping(address => uint) userNonce;
     
     address public admin;
@@ -183,6 +183,7 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, to, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
+        verifiedOffer[ethSignedMsgHash] = true;
         emit DirectOffer(txnId);
         _transferMsgValueToTreasury();
     }
@@ -190,9 +191,9 @@ contract NewDawnPaymentForwarder {
     function acceptDirectOffer(uint txnId, uint nftId, address from, bytes calldata sig) external payable tradingEnabled {
         bytes32 ethSignedMsgHash = getHashDirect(txnId, nftId, msg.sender, from);
         require(ECDSA.recover(ethSignedMsgHash, sig) == from, "Signer is not the from address");
-        require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
+        require(verifiedOffer[ethSignedMsgHash], "Offer not verified!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
-        usedOffers[ethSignedMsgHash] = true;
+        verifiedOffer[ethSignedMsgHash] = false;
         emit DirectOfferAcceptance(txnId);
         _transferMsgValueToTreasury();
     }
@@ -201,6 +202,7 @@ contract NewDawnPaymentForwarder {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, msg.sender);
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
+        verifiedOffer[ethSignedMsgHash] = true;
         emit GlobalOffer(txnId);
         _transferMsgValueToTreasury();
     }
@@ -208,16 +210,16 @@ contract NewDawnPaymentForwarder {
     function acceptGlobalOffer(uint txnId, uint nftId, address from, bytes calldata sig) external payable tradingEnabled {
         bytes32 ethSignedMsgHash = getHashGlobal(txnId, nftId, from);
         require(ECDSA.recover(ethSignedMsgHash, sig) == from, "Signer is not the from address");
-        require(!usedOffers[ethSignedMsgHash], "Offer accepted or canceled!");
+        require(verifiedOffer[ethSignedMsgHash], "Offer not verified!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
-        usedOffers[ethSignedMsgHash] = true;
+        verifiedOffer[ethSignedMsgHash] = false;
         emit GlobalOfferAcceptance(txnId);
         _transferMsgValueToTreasury();
     }
 
     function cancelOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external {
         require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer is not the from address");
-        usedOffers[ethSignedMsgHash] = true;
+        verifiedOffer[ethSignedMsgHash] = false;
     }
 
     function cancelAllActiveOfferes() external {
