@@ -223,7 +223,7 @@ contract NewDawnPaymentForwarder {
 
     function cancelOffer(bytes32 ethSignedMsgHash, bytes calldata signature) external {
         require(ECDSA.recover(ethSignedMsgHash, signature) == msg.sender, "Signer is not the from address");
-        usedOffers[ethSignedMsgHash] = true;
+        verifiedOffer[ethSignedMsgHash] = false;
     }
 
     function cancelAllActiveOfferes() external {
