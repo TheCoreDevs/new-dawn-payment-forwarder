@@ -151,10 +151,10 @@ contract NewDawnPaymentForwarder {
     event UpdatedTradingStatus(bool status);
     event PriceChange(string indexed _type, uint newPrice);
     event NewNonce(address indexed user, uint nonce);
-    event DirectOffer(uint txnId);
-    event DirectOfferAcceptance(uint txnId);
-    event GlobalOffer(uint txnId);
-    event GlobalOfferAcceptance(uint txnId);
+    event DirectOffer(uint txnId, uint nftId, address to, address from_poster);
+    event DirectOfferAcceptance(uint txnId, uint nftId, address to_accepter, address from);
+    event GlobalOffer(uint txnId, uint nftId, address from_poster);
+    event GlobalOfferAcceptance(uint txnId, uint nftId, address from, address caller);
 
     modifier onlyAdmin {
         require(msg.sender == admin, "Only Admin");
@@ -188,7 +188,7 @@ contract NewDawnPaymentForwarder {
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Signer not transaction sender");
         require(msg.value == _directOfferPrice, "Invalid Eth Amount");
         verifiedOffer[ethSignedMsgHash] = true;
-        emit DirectOffer(txnId);
+        emit DirectOffer(txnId, nftId, to, msg.sender);
         _transferMsgValueToTreasury();
     }
 
@@ -198,7 +198,7 @@ contract NewDawnPaymentForwarder {
         require(verifiedOffer[ethSignedMsgHash], "Offer not verified!");
         require(msg.value == _directAcceptancePrice, "Invalid Eth Amount");
         verifiedOffer[ethSignedMsgHash] = false;
-        emit DirectOfferAcceptance(txnId);
+        emit DirectOfferAcceptance(txnId, nftId, msg.sender, from);
         _transferMsgValueToTreasury();
     }
 
@@ -207,7 +207,7 @@ contract NewDawnPaymentForwarder {
         require(ECDSA.recover(ethSignedMsgHash, sig) == msg.sender, "Invalid signature!");
         require(msg.value == _globalOfferPrice, "Invalid Eth Amount");
         verifiedOffer[ethSignedMsgHash] = true;
-        emit GlobalOffer(txnId);
+        emit GlobalOffer(txnId, nftId, msg.sender);
         _transferMsgValueToTreasury();
     }
 
@@ -217,7 +217,7 @@ contract NewDawnPaymentForwarder {
         require(verifiedOffer[ethSignedMsgHash], "Offer not verified!");
         require(msg.value == _globalAcceptancePrice, "Invalid Eth Amount");
         verifiedOffer[ethSignedMsgHash] = false;
-        emit GlobalOfferAcceptance(txnId);
+        emit GlobalOfferAcceptance(txnId, nftId, from, msg.sender);
         _transferMsgValueToTreasury();
     }
 
